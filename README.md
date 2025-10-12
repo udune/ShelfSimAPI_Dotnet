@@ -35,49 +35,13 @@ dotnet restore
 }
 ```
 
-3. **마이그레이션 적용** (향후 추가 예정)
-```bash
-dotnet ef database update
-```
-
-4. **서버 실행**
+3. **서버 실행** (마이그레이션 자동 적용)
 ```bash
 dotnet run
 ```
 
 - 서버 주소: `http://localhost:5109`
-- Swagger UI: `http://localhost:5109/swagger` (개발 환경)
-
-## API 엔드포인트 (계획)
-
-### Runs (시뮬레이션 세션)
-
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/runs` | 새 시뮬레이션 생성 |
-| GET | `/api/runs/{id}` | Run 상세 조회 |
-| GET | `/api/runs` | Run 목록 조회 |
-| PATCH | `/api/runs/{id}/status` | 상태 업데이트 |
-| GET | `/api/runs/{id}/results.csv` | CSV 다운로드 |
-
-### Jobs (작업)
-
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/api/jobs/batch` | 작업 일괄 생성 |
-| GET | `/api/jobs?runId={id}` | Run별 작업 조회 |
-| GET | `/api/jobs/{id}` | 작업 상세 조회 |
-| PATCH | `/api/jobs/{id}/result` | 작업 결과 업데이트 |
-
-### Books (도서)
-
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/books` | 도서 목록 |
-| GET | `/api/books/{id}` | 도서 상세 조회 |
-| POST | `/api/books` | 도서 생성 |
-| PUT | `/api/books/{id}` | 도서 수정 |
-| DELETE | `/api/books/{id}` | 도서 삭제 |
+- Swagger UI: `http://localhost:5109/swagger`
 
 ## 데이터 모델
 
@@ -86,11 +50,13 @@ dotnet run
 ```csharp
 {
   "id": "guid",
+  "layoutId": "guid",
   "randomSeed": 42,
   "handleTimeSec": 2.0,
   "robotSpeedCellsPerSec": 3.0,
   "topN": 3,
   "status": "Pending",
+  "summary": "...",
   "createdAt": "2025-01-08T10:30:00Z"
 }
 ```
@@ -105,8 +71,15 @@ dotnet run
   "cellCode": "D20",
   "bookTitle": "Clean Code",
   "quantity": 1,
+  "startTs": "2025-01-08T10:30:00Z",
+  "endTs": "2025-01-08T10:30:12Z",
+  "travelTimeSec": 10.0,
+  "handleTimeSec": 2.0,
+  "totalTimeSec": 12.0,
+  "pathLengthCells": 30,
   "result": "Success",
-  "totalTimeSec": 12.5
+  "failReason": null,
+  "robotName": "Alpha"
 }
 ```
 
@@ -119,7 +92,8 @@ dotnet run
   "author": "Robert C. Martin",
   "thicknessMn": 30,
   "heightMm": 210,
-  "sku": "BK-001"
+  "sku": "BK-001",
+  "createdAt": "2025-01-08T10:30:00Z"
 }
 ```
 
@@ -127,30 +101,47 @@ dotnet run
 
 ```
 ShelfSimAPI/
-├── Controllers/           # API 컨트롤러 (향후 추가)
-├── Models/               # 데이터 모델
-│   ├── Run.cs
-│   ├── Job.cs
-│   └── Book.cs
-├── Data/                 # DbContext (향후 추가)
-├── DTOs/                 # DTO (향후 추가)
-├── Services/             # 비즈니스 로직 (향후 추가)
+├── Controllers/
+│   └── WeatherForecastController.cs   # 샘플 컨트롤러
+├── Models/
+│   ├── Run.cs                         # 시뮬레이션 세션 모델
+│   ├── Job.cs                         # 작업 모델
+│   └── Book.cs                        # 도서 모델
+├── Data/
+│   └── AppDbContext.cs                # EF Core DbContext
 ├── Properties/
-│   └── launchSettings.json
-├── appsettings.Example.json
-├── Program.cs
-└── ShelfSimAPI.csproj
+│   └── launchSettings.json            # 실행 설정
+├── appsettings.Example.json           # 연결 문자열 예시
+├── Program.cs                         # 진입점
+├── ShelfSimAPI.csproj                 # 프로젝트 파일
+└── README.md
 ```
 
-## 개발 계획
+## 현재 구현 상태
 
-- [x] 프로젝트 초기 설정
-- [x] 데이터 모델 정의
-- [ ] DbContext 구현
-- [ ] API 컨트롤러 구현
-- [ ] 비즈니스 로직 구현
-- [ ] CSV 내보내기 기능
-- [ ] 테스트 작성
+### ✅ 완료
+- 프로젝트 초기 설정
+- 데이터 모델 정의 (Run, Job, Book)
+- DbContext 구현
+- 자동 마이그레이션 적용
+- CORS 설정 (Unity 연동 대비)
+- Swagger UI 설정
+
+### 🔄 진행 예정
+- API 컨트롤러 구현
+  - RunsController
+  - JobsController  
+  - BooksController
+- CSV 내보내기 기능
+- 비즈니스 로직 구현
+- 테스트 작성
+
+## 개발 노트
+
+- 앱 시작 시 자동으로 마이그레이션 적용
+- CORS 정책 "AllowUnity"로 Unity 클라이언트 연동 준비
+- 개발 환경에서만 Swagger UI 활성화
+- HTTPS 리디렉션 기본 활성화
 
 ## 라이선스
 
