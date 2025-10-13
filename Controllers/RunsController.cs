@@ -8,7 +8,7 @@ using ShelfSimAPI.Models;
 namespace ShelfSimAPI.Controllers;
 
 // RunsController 클래스 정의
-[ApiController]
+[ApiController] // API 컨트롤러 지정
 [Route("api/[controller]")] // 기본 라우트 설정
 public class RunsController(AppDbContext context, ILogger<RunsController> logger) : ControllerBase
 {
