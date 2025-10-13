@@ -58,3 +58,4 @@ nunit-*.xml
 appsettings.json
 appsettings.Development.json
 !appsettings.Example.json
+CLAUDE.md
