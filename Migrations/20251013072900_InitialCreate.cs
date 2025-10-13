@@ -15,7 +15,7 @@ namespace ShelfSimAPI.Migrations
                 name: "Books",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Author = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     ThicknessMn = table.Column<int>(type: "int", nullable: false),
@@ -32,8 +32,9 @@ namespace ShelfSimAPI.Migrations
                 name: "Runs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LayoutId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LayoutId = table.Column<int>(type: "int", nullable: true),
                     RandomSeed = table.Column<int>(type: "int", nullable: false),
                     HandleTimeSec = table.Column<float>(type: "real", nullable: false),
                     RobotSpeedCellsPerSec = table.Column<float>(type: "real", nullable: false),
@@ -51,8 +52,9 @@ namespace ShelfSimAPI.Migrations
                 name: "Jobs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RunId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RunId = table.Column<int>(type: "int", nullable: false),
                     Action = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     CellCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     BookTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),

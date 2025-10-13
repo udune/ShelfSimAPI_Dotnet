@@ -32,8 +32,8 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
         await context.SaveChangesAsync(); // 비동기 저장
         
         logger.LogInformation("Run created: {RunId}", run.Id);
-        
-        return CreatedAtAction(nameof(GetRun), new { runId = run.Id }, run); // 201 응답 반환
+
+        return Ok(run); // 200 응답 반환
     }
 
     [HttpGet("{id}")] // GET /api/runs/{id}

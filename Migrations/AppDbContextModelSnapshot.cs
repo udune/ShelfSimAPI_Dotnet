@@ -24,9 +24,8 @@ namespace ShelfSimAPI.Migrations
 
             modelBuilder.Entity("ShelfSimAPI.Models.Book", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
 
                     b.Property<string>("Author")
                         .HasMaxLength(200)
@@ -59,9 +58,11 @@ namespace ShelfSimAPI.Migrations
 
             modelBuilder.Entity("ShelfSimAPI.Models.Job", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Action")
                         .IsRequired()
@@ -101,8 +102,8 @@ namespace ShelfSimAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<Guid>("RunId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("RunId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("StartTs")
                         .HasColumnType("datetime2");
@@ -122,9 +123,11 @@ namespace ShelfSimAPI.Migrations
 
             modelBuilder.Entity("ShelfSimAPI.Models.Run", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -132,8 +135,8 @@ namespace ShelfSimAPI.Migrations
                     b.Property<float>("HandleTimeSec")
                         .HasColumnType("real");
 
-                    b.Property<Guid?>("LayoutId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("LayoutId")
+                        .HasColumnType("int");
 
                     b.Property<int>("RandomSeed")
                         .HasColumnType("int");
