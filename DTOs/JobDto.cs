@@ -26,7 +26,7 @@ public class JobDto
 public class CreateJobsBatchDto
 {
     [Required]
-    public Guid RunId { get; set; }
+    public int RunId { get; set; }
     
     [Required]
     [MinLength(1, ErrorMessage = "Jobs 리스트는 최소 1개 이상의 작업을 포함해야 합니다.")]

@@ -6,10 +6,11 @@ namespace ShelfSimAPI.Models;
 public class Job
 {
     [Key] // 기본키 
-    public Guid Id { get; set; } = Guid.NewGuid(); // 자동 생성 GUID
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; } // 자동 증가 정수 ID
     
     [Required] // Not Null
-    public Guid RunId { get; set; } // Run에 대한 외래 키
+    public int RunId { get; set; } // Run에 대한 외래 키
     
     [Required] // Not Null
     [MaxLength(10)]

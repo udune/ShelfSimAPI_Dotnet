@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ShelfSimAPI.Models;
 
 public class Book
 {
     [Key] // 기본 키
-    public Guid Id { get; set; } = Guid.NewGuid(); // 새 GUID 자동 생성
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public int Id { get; set; } // 책 ID (외부 시스템에서 제공)
     
     [Required] // Not Null
     [MaxLength(200)]

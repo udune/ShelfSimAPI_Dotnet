@@ -38,7 +38,7 @@ public class BooksController(AppDbContext context, ILogger<BooksController> logg
     [HttpGet("{id}")] // GET /api/books/{id}
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
     [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<ActionResult<Book>> GetBook(Guid id) // GetBook 메서드 정의
+    public async Task<ActionResult<Book>> GetBook(int id) // GetBook 메서드 정의
     {
         var book = await context.Books.FindAsync(id); // ID로 책 조회
         if (book == null) // 책이 없으면

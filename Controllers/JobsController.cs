@@ -52,7 +52,7 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
     // GetJobsByRun: 특정 Run에 속한 모든 작업을 조회하는 엔드포인트
     [HttpGet] // GET /api/jobs?runId={runId}
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
-    public async Task<ActionResult<List<Job>>> GetJobsByRun([FromQuery] Guid runId) // GetJobsByRun 메서드 정의
+    public async Task<ActionResult<List<Job>>> GetJobsByRun([FromQuery] int runId) // GetJobsByRun 메서드 정의
     {
         var jobs = await context.Jobs // Job 엔티티에서
             .Where(job => job.RunId == runId) // 특정 RunId에 속한 Job 필터링
@@ -66,7 +66,7 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
     [HttpPatch("{id}/result")] // PATCH /api/jobs/{id}/result
     [ProducesResponseType(StatusCodes.Status204NoContent)] // 204 응답 타입
     [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<IActionResult> UpdateResult(Guid id, [FromBody] UpdateJobStatusDto dto) // UpdateResult 메서드 정의
+    public async Task<IActionResult> UpdateResult(int id, [FromBody] UpdateJobStatusDto dto) // UpdateResult 메서드 정의
     {
         var job = await context.Jobs.FindAsync(id); // Job 조회
         if (job == null) // Job이 없으면
@@ -97,7 +97,7 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
     [HttpGet("{id}")] // GET /api/jobs/{id}
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
     [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<ActionResult<Job>> GetJobById(Guid id) // GetJobById 메서드 정의
+    public async Task<ActionResult<Job>> GetJobById(int id) // GetJobById 메서드 정의
     {
         var job = await context.Jobs
             .Include(job => job.Run)

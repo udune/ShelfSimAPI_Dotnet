@@ -39,7 +39,7 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
     [HttpGet("{id}")] // GET /api/runs/{id}
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
     [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<ActionResult<Run>> GetRun(Guid id) // GetRun 메서드 정의
+    public async Task<ActionResult<Run>> GetRun(int id) // GetRun 메서드 정의
     {
         var run = await context.Runs // Run 엔티티에서
             .Include(run => run.Jobs) // 관련된 Jobs 포함
@@ -84,7 +84,7 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
     [HttpPatch("{id}/status")] // PATCH /api/runs/{id}/status
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
     [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto dto) // UpdateStatus 메서드 정의
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto) // UpdateStatus 메서드 정의
     {
         var run = await context.Runs.FindAsync(id); // ID로 Run 조회
         if (run == null) // Run이 없으면
@@ -104,7 +104,7 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
     [HttpGet("{id}/results.csv")] // GET /api/runs/{id}/results.csv
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
     [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<IActionResult> DownloadCsv(Guid id) // DownloadCsv 메서드 정의
+    public async Task<IActionResult> DownloadCsv(int id) // DownloadCsv 메서드 정의
     {
         var run = await context.Runs.FindAsync(id); // ID로 Run 조회
         if (run == null) // Run이 없으면

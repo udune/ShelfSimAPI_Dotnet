@@ -6,9 +6,10 @@ namespace ShelfSimAPI.Models;
 public class Run
 {
     [Key] // 기본 키
-    public Guid Id { get; set; } = Guid.NewGuid(); // 새 GUID 자동 생성
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; } // 자동 증가 정수 ID
     
-    public Guid? LayoutId { get; set; } // Layout에 대한 외래 키
+    public int? LayoutId { get; set; } // Layout에 대한 외래 키 (선택 사항)
     
     [Required] // Not Null
     public int RandomSeed { get; set; } // 랜덤 시드
