@@ -1,0 +1,20 @@
+# 빌드 결과물 (Docker 내에서 새로 생성)
+bin/
+obj/
+publish/
+
+# 개발 환경 파일
+*.md
+.git/
+.gitignore
+.vs/
+.vscode/
+*.user
+*.suo
+
+# 환경별 설정 파일
+appsettings.Development.json
+appsettings.*.json
+
+# 테스트 파일
+**/TestResults/
