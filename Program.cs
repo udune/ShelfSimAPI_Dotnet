@@ -43,13 +43,9 @@ using (var scope = app.Services.CreateScope()) // 서비스 범위 생성
     }
 }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) // 개발 환경인지 확인
-{
-    app.MapOpenApi(); // 개발 환경에서 OpenAPI 매핑
-    app.UseSwagger(); // 개발 환경에서 Swagger 사용
-    app.UseSwaggerUI(); // 개발 환경에서 Swagger UI 사용
-}
+app.MapOpenApi(); // 개발 환경에서 OpenAPI 매핑
+app.UseSwagger(); // 개발 환경에서 Swagger 사용
+app.UseSwaggerUI(); // 개발 환경에서 Swagger UI 사용
 
 app.UseHttpsRedirection(); // HTTPS 리디렉션 사용
 app.UseCors("AllowUnity"); // "AllowUnity" CORS 정책 사용
