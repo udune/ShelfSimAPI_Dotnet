@@ -61,3 +61,7 @@ appsettings.Development.json
 !appsettings.Example.json
 CLAUDE.md
 info.md
+
+# GCP Service Account keys
+gcp-sa-key.json
+*.json.key
