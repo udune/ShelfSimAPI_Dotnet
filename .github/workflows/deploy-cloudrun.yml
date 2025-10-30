@@ -9,7 +9,7 @@ env:
   PROJECT_ID: shelfsim
   SERVICE_NAME: shelfsim-api
   REGION: asia-northeast3
-  IMAGE_NAME: gcr.io/shelfsim/shelfsim-api
+  IMAGE_NAME: asia-northeast3-docker.pkg.dev/shelfsim/shelfsim-api/app
 
 jobs:
   deploy:
@@ -23,19 +23,30 @@ jobs:
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
 
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
 
-    - name: Configure Docker for GCR
-      run: gcloud auth configure-docker
+    - name: Create Artifact Registry repository (if not exists)
+      run: |
+        gcloud artifacts repositories create shelfsim-api \
+          --repository-format=docker \
+          --location=asia-northeast3 \
+          --description="ShelfSim API Docker images" || true
+
+    - name: Configure Docker for Artifact Registry
+      run: |
+        gcloud auth configure-docker asia-northeast3-docker.pkg.dev
 
     - name: Build Docker image
       run: |
         docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
                      -t ${{ env.IMAGE_NAME }}:latest .
 
-    - name: Push Docker image to GCR
+    - name: Push Docker image to Artifact Registry
       run: |
         docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
         docker push ${{ env.IMAGE_NAME }}:latest
