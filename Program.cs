@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options => // DbContext 설정
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")); // SQL Server 사용
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")); // PostgreSQL 사용
 });
 
 builder.Services.AddCors(options => // CORS 정책 설정

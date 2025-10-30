@@ -6,7 +6,7 @@ ShelfSim 시뮬레이션 결과를 저장하고 관리하는 ASP.NET Core Web AP
 
 - .NET 9.0
 - Entity Framework Core 9.0
-- SQL Server
+- PostgreSQL (Azure PostgreSQL 무료 티어 지원)
 - OpenAPI/Swagger
 
 ## 시작하기
@@ -14,7 +14,7 @@ ShelfSim 시뮬레이션 결과를 저장하고 관리하는 ASP.NET Core Web AP
 ### 필수 조건
 
 - .NET 9.0 SDK
-- SQL Server (LocalDB 또는 Express)
+- PostgreSQL 15+ (로컬 개발) 또는 Azure PostgreSQL (무료 티어)
 
 ### 설치 및 실행
 
@@ -30,7 +30,16 @@ dotnet restore
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=ShelfSimDB;Integrated Security=true;TrustServerCertificate=True;"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=shelfsimdb;Username=postgres;Password=your_password"
+  }
+}
+```
+
+Azure PostgreSQL 사용 시:
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=your-server.postgres.database.azure.com;Port=5432;Database=shelfsimdb;Username=your_username;Password=your_password;SSL Mode=Require;Trust Server Certificate=true"
   }
 }
 ```
@@ -284,6 +293,123 @@ dotnet run
 ```bash
 dotnet publish -c Release -o ./publish
 ```
+
+### Azure PostgreSQL 무료 티어 배포
+
+#### 1. Azure PostgreSQL 서버 생성
+
+Azure Portal에서 PostgreSQL 무료 티어를 생성합니다:
+
+1. **Azure Portal 접속**: https://portal.azure.com
+2. **리소스 만들기** → "Azure Database for PostgreSQL"
+3. **배포 옵션 선택**: "Flexible Server" 선택
+4. **기본 설정**:
+   - **구독**: 사용 중인 Azure 구독 선택
+   - **리소스 그룹**: 새로 만들기 또는 기존 선택
+   - **서버 이름**: `shelfsim-db` (고유한 이름)
+   - **지역**: Korea Central 또는 가까운 지역
+   - **PostgreSQL 버전**: 15 이상
+   - **워크로드 유형**: "개발" 선택
+5. **컴퓨팅 + 스토리지**:
+   - **컴퓨팅 계층**: **Burstable**
+   - **컴퓨팅 크기**: **B1ms** (1 vCore, 2 GiB RAM)
+   - **스토리지**: 32 GiB (최소)
+   - 월 예상 비용: **무료** (12개월 무료 크레딧 사용)
+6. **인증**:
+   - **인증 방법**: PostgreSQL 인증
+   - **관리자 사용자 이름**: `shelfsimadmin`
+   - **암호**: 강력한 암호 설정
+7. **네트워킹**:
+   - **연결 방법**: 퍼블릭 액세스
+   - **방화벽 규칙**: "Azure 서비스 및 리소스에서 이 서버에 대한 퍼블릭 액세스 허용" 체크
+   - **현재 클라이언트 IP 주소 추가**: 체크 (로컬에서 연결 시)
+
+#### 2. 데이터베이스 생성
+
+PostgreSQL 서버 생성 후 데이터베이스를 생성합니다:
+
+**방법 1: Azure Portal**
+1. 생성한 PostgreSQL 서버로 이동
+2. 왼쪽 메뉴에서 "데이터베이스" 선택
+3. "+ 추가" 클릭
+4. 데이터베이스 이름: `shelfsimdb`
+5. 문자 집합: `UTF8`
+
+**방법 2: psql 클라이언트**
+```bash
+psql "host=your-server.postgres.database.azure.com port=5432 dbname=postgres user=shelfsimadmin password=your_password sslmode=require"
+CREATE DATABASE shelfsimdb;
+```
+
+#### 3. 연결 문자열 설정
+
+`appsettings.json` 파일에 Azure PostgreSQL 연결 문자열을 설정:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=your-server.postgres.database.azure.com;Port=5432;Database=shelfsimdb;Username=shelfsimadmin;Password=your_password;SSL Mode=Require;Trust Server Certificate=true"
+  }
+}
+```
+
+#### 4. 마이그레이션 적용
+
+로컬에서 마이그레이션을 적용하거나, 앱 시작 시 자동으로 적용됩니다:
+
+```bash
+# 로컬에서 수동으로 적용
+dotnet ef database update
+
+# 또는 앱 실행 시 자동 적용
+dotnet run
+```
+
+#### 5. Azure App Service 배포 (선택사항)
+
+API를 Azure App Service에 배포하려면:
+
+1. **App Service 생성**:
+   ```bash
+   az webapp create --resource-group myResourceGroup \
+     --plan myAppServicePlan \
+     --name shelfsim-api \
+     --runtime "DOTNET|9.0"
+   ```
+
+2. **연결 문자열 설정**:
+   ```bash
+   az webapp config connection-string set \
+     --resource-group myResourceGroup \
+     --name shelfsim-api \
+     --settings DefaultConnection="Host=your-server.postgres.database.azure.com;Port=5432;Database=shelfsimdb;Username=shelfsimadmin;Password=your_password;SSL Mode=Require;Trust Server Certificate=true" \
+     --connection-string-type PostgreSQL
+   ```
+
+3. **배포**:
+   ```bash
+   dotnet publish -c Release -o ./publish
+   cd publish
+   zip -r ../deploy.zip .
+   az webapp deployment source config-zip \
+     --resource-group myResourceGroup \
+     --name shelfsim-api \
+     --src ../deploy.zip
+   ```
+
+#### 무료 티어 제한사항
+
+- **월 750시간** 무료 (12개월)
+- **B1ms 인스턴스**: 1 vCore, 2 GiB RAM
+- **스토리지**: 32 GiB
+- **백업**: 7일 보존
+- 무료 크레딧 소진 후 요금 발생
+
+#### 비용 관리
+
+- **Azure Cost Management**에서 예산 알림 설정
+- 사용하지 않을 때는 서버 중지 (비용 절감)
+- 개발/테스트 용도로만 사용
 
 ## 보안 고려사항
 

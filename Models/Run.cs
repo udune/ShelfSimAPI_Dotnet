@@ -27,8 +27,7 @@ public class Run
     [Required]
     [MaxLength(20)] public string Status { get; set; } = "Pending"; // 실행 상태
     
-    [Column(TypeName = "nvarchar(max)")] // Json 형식
-    public string? Summary { get; set; } // 실행 결과 요약
+    public string? Summary { get; set; } // 실행 결과 요약 (Json 형식)
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 생성 시간
 
