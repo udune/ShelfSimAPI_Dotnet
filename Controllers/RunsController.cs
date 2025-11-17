@@ -33,7 +33,8 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
         
         logger.LogInformation("Run created: {RunId}", run.Id);
 
-        return Ok(run); // 200 응답 반환
+        // 201 Created 응답과 함께 생성된 리소스의 위치를 반환
+        return CreatedAtAction(nameof(GetRun), new { id = run.Id }, run);
     }
 
     [HttpGet("{id}")] // GET /api/runs/{id}
@@ -42,8 +43,8 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
     public async Task<ActionResult<Run>> GetRun(int id) // GetRun 메서드 정의
     {
         var run = await context.Runs // Run 엔티티에서
-            .Include(run => run.Jobs) // 관련된 Jobs 포함
-            .FirstOrDefaultAsync(run => run.Id == id); // ID로 Run 조회
+            .Include(r => r.Jobs) // 관련된 Jobs 포함
+            .FirstOrDefaultAsync(r => r.Id == id); // ID로 Run 조회
 
         if (run == null) // Run이 없으면
         {
@@ -63,7 +64,7 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
     {
         var totalCount = await context.Runs.CountAsync(); // 전체 Run 개수 조회
         var runs = await context.Runs // Run 엔티티에서
-            .OrderByDescending(run => run.CreatedAt) // 생성일 내림차순 정렬
+            .OrderByDescending(r => r.CreatedAt) // 생성일 내림차순 정렬
             .Skip((page - 1) * pageSize) // 페이지네이션 적용
             .Take(pageSize) // 페이지 크기만큼 조회
             .ToListAsync(); // 비동기 조회
@@ -103,7 +104,7 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
 
     [HttpGet("{id}/results.csv")] // GET /api/runs/{id}/results.csv
     [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
-    [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
+    [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 반환
     public async Task<IActionResult> DownloadCsv(int id) // DownloadCsv 메서드 정의
     {
         var run = await context.Runs.FindAsync(id); // ID로 Run 조회
@@ -118,13 +119,13 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
             .ToListAsync(); // 비동기 조회
 
         var csv = new StringBuilder(); // CSV 문자열 빌더
-        csv.Append("\\uFEFF"); // UTF-8 BOM 추가
+        csv.Append("\uFEFF"); // UTF-8 BOM 추가
+        // 헤더 순서: JobId,Action,CellCode,BookTitle,Quantity,StartTs,EndTs,TravelTimeSec,HandleTimeSec,TotalTimeSec,PathLengthCells,Result,FailReason,RobotName
         csv.AppendLine("JobId,Action,CellCode,BookTitle,Quantity,StartTs,EndTs,TravelTimeSec,HandleTimeSec,TotalTimeSec,PathLengthCells,Result,FailReason,RobotName");
         foreach (var job in jobs) // 각 Job에 대해
         {
             csv.AppendLine(
                 $"{job.Id}," +
-                $"{EscapeCsv(job.RobotName ?? "")}," +
                 $"{job.Action}," +
                 $"{job.CellCode}," +
                 $"{EscapeCsv(job.BookTitle ?? "")}," +
@@ -136,8 +137,9 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
                 $"{FormatFloat(job.TotalTimeSec)}," +
                 $"{job.PathLengthCells ?? 0}," +
                 $"{job.Result ?? ""}," +
-                $"{EscapeCsv(job.FailReason ?? "")},"
-                ); // 각 Job 정보를 CSV 형식으로 추가
+                $"{EscapeCsv(job.FailReason ?? "")}," +
+                $"{EscapeCsv(job.RobotName ?? "")}"
+                ); // 각 Job 정보를 CSV 형식으로 추가 (순서 수정)
         }
         
         var bytes = Encoding.UTF8.GetBytes(csv.ToString()); // CSV 문자열을 바이트 배열로 변환
@@ -153,7 +155,7 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
             return ""; // 빈 문자열 반환
         }
 
-        if (value.Contains(",") || value.Contains("\r") || value.Contains("\n")) // 값에 쉼표, 줄바꿈 등이 포함되어 있으면
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\r') || value.Contains('\n')) // 값에 쉼표, 큰따옴표, 줄바꿈 등이 포함되어 있으면
         {
             return $"\"{value.Replace("\"", "\"\"")}\""; // 큰따옴표로 감싸고, 내부의 큰따옴표는 두 개로 이스케이프
         }
@@ -168,12 +170,30 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
             return ""; // 빈 문자열 반환
         }
         
-        // UTC 시간을 "yyyy-MM-dd HH:mm:ss" 형식의 문자열로 변환
-        var koreaTime = TimeZoneInfo.ConvertTimeFromUtc(
-            dateTime.Value.ToUniversalTime(), 
-            TimeZoneInfo.FindSystemTimeZoneById("Korea Standard Time")); // 한국 시간대로 변환
-        
-        return koreaTime.ToString("yyyy-MM-dd HH:mm:ss"); // "YYYY-MM-DD HH:MM:SS" 형식 반환
+        try
+        {
+            // Linux/Windows 호환성을 위해 "Asia/Seoul" 사용
+            var timeZoneId = "Asia/Seoul";
+            try
+            {
+                // 타임존이 시스템에 존재하는지 확인
+                TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                // Windows 호환성을 위해 대체 ID 사용
+                timeZoneId = "Korea Standard Time";
+            }
+            
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime.Value, timeZone);
+            return convertedTime.ToString("yyyy-MM-dd HH:mm:ss");
+        }
+        catch (Exception)
+        {
+            // 타임존 변환 실패 시 UTC 시간으로 대체
+            return dateTime.Value.ToString("yyyy-MM-dd HH:mm:ss (UTC)");
+        }
     }
 
     // 소수점 둘째 자리까지 포맷 메서드
@@ -184,6 +204,6 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
             return ""; // 빈 문자열 반환
         }
         
-        return Math.Round(value.Value, 2, MidpointRounding.AwayFromZero).ToString("F2"); // 소수점 둘째 자리까지 반올림하여 문자열로 반환
+        return value.Value.ToString("F2"); // 소수점 둘째 자리까지 포맷
     }
 }
