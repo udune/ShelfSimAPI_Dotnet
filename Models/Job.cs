@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ShelfSimAPI.Models;
 
@@ -46,5 +47,6 @@ public class Job
     public string? RobotName { get; set; } // 작업을 수행한 로봇 이름
 
     [ForeignKey(nameof(RunId))] // 외래 키 관계
+    [JsonIgnore]
     public Run Run { get; set; } = null!; // Run과의 탐색 속성
 }
