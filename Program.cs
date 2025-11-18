@@ -12,7 +12,12 @@ builder.Services.AddCors(options => // CORS 정책 설정
 {
     options.AddPolicy("AllowUnity", policy => // "AllowUnity" 정책 정의
     {
-        policy.AllowAnyOrigin() // 모든 출처 허용
+        policy.WithOrigins(
+                "https://zingy-cascaron-9d9795.netlify.app",
+                "http://localhost:5000",
+                "https://localhost:5001",
+                "http://localhost"
+            ) // 특정 출처 허용
             .AllowAnyMethod() // 모든 HTTP 메서드 허용
             .AllowAnyHeader(); // 모든 헤더 허용
     });
@@ -21,8 +26,6 @@ builder.Services.AddCors(options => // CORS 정책 설정
 // Add services to the container.
 
 builder.Services.AddControllers(); // 컨트롤러 서비스 추가
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi(); // OpenAPI 서비스 추가
 builder.Services.AddEndpointsApiExplorer(); // 엔드포인트 API 탐색기 추가
 builder.Services.AddSwaggerGen(); // Swagger 생성기 추가
 
@@ -43,9 +46,9 @@ using (var scope = app.Services.CreateScope()) // 서비스 범위 생성
     }
 }
 
-app.MapOpenApi(); // 개발 환경에서 OpenAPI 매핑
-app.UseSwagger(); // 개발 환경에서 Swagger 사용
-app.UseSwaggerUI(); // 개발 환경에서 Swagger UI 사용
+// Swagger UI를 항상 활성화
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection(); // HTTPS 리디렉션 사용
 app.UseCors("AllowUnity"); // "AllowUnity" CORS 정책 사용
