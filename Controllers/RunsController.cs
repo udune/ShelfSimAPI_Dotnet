@@ -7,122 +7,118 @@ using ShelfSimAPI.Models;
 
 namespace ShelfSimAPI.Controllers;
 
-// RunsController 클래스 정의
-[ApiController] // API 컨트롤러 지정
-[Route("api/[controller]")] // 기본 라우트 설정
+[ApiController]
+[Route("api/[controller]")]
 public class RunsController(AppDbContext context, ILogger<RunsController> logger) : ControllerBase
 {
-    [HttpPost] // POST /api/runs
-    [ProducesResponseType(StatusCodes.Status201Created)] // 201 응답 타입
-    [ProducesResponseType(StatusCodes.Status400BadRequest)] // 400 응답 타입
-    public async Task<ActionResult<Run>> CreateRun([FromBody] CreateRunDto dto) // CreateRun 메서드 정의
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<Run>> CreateRun([FromBody] CreateRunDto dto)
     {
         logger.LogInformation("Creating Run");
 
-        var run = new Run // 새로운 Run 객체 생성
+        var run = new Run
         {
-            RandomSeed = dto.RandomSeed, // 랜덤 시드 설정
-            HandleTimeSec = dto.HandleTimeSec, // 처리 시간 설정
-            RobotSpeedCellsPerSec = dto.RobotSpeedCellsPerSec, // 로봇 속도 설정
-            TopN = dto.TopN, // TopN 설정
-            Status = "PENDING" // 초기 상태 설정
+            RandomSeed = dto.RandomSeed,
+            HandleTimeSec = dto.HandleTimeSec,
+            RobotSpeedCellsPerSec = dto.RobotSpeedCellsPerSec,
+            TopN = dto.TopN,
+            Status = "PENDING"
         };
-        
-        context.Runs.Add(run); // DbContext에 추가
-        await context.SaveChangesAsync(); // 비동기 저장
-        
+
+        context.Runs.Add(run);
+        await context.SaveChangesAsync();
+
         logger.LogInformation("Run created: {RunId}", run.Id);
 
-        // 201 Created 응답과 함께 생성된 리소스의 위치를 반환
         return CreatedAtAction(nameof(GetRun), new { id = run.Id }, run);
     }
 
-    [HttpGet("{id}")] // GET /api/runs/{id}
-    [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
-    [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<ActionResult<Run>> GetRun(int id) // GetRun 메서드 정의
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Run>> GetRun(int id)
     {
-        var run = await context.Runs // Run 엔티티에서
-            .Include(r => r.Jobs) // 관련된 Jobs 포함
-            .FirstOrDefaultAsync(r => r.Id == id); // ID로 Run 조회
+        var run = await context.Runs
+            .Include(r => r.Jobs)
+            .FirstOrDefaultAsync(r => r.Id == id);
 
-        if (run == null) // Run이 없으면
+        if (run == null)
         {
-            logger.LogWarning("Run not found: {RunId}", id); // 로그 경고
-            return NotFound(new {error = "Run not found"}); // 404 응답 반환
+            logger.LogWarning("Run not found: {RunId}", id);
+            return NotFound(new {error = "Run not found"});
         }
 
-        return run; // Run 반환
+        return run;
     }
 
-    [HttpGet] // GET /api/runs
-    [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<object>> GetRuns(
-        [FromQuery] int page = 1, // 페이지 번호 (기본값 1)
-        [FromQuery] int pageSize = 20 // 페이지 크기 (기본값 20)
-        ) // GetRuns 메서드 정의
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var totalCount = await context.Runs.CountAsync(); // 전체 Run 개수 조회
-        var runs = await context.Runs // Run 엔티티에서
-            .OrderByDescending(r => r.CreatedAt) // 생성일 내림차순 정렬
-            .Skip((page - 1) * pageSize) // 페이지네이션 적용
-            .Take(pageSize) // 페이지 크기만큼 조회
-            .ToListAsync(); // 비동기 조회
+        var totalCount = await context.Runs.CountAsync();
+        var runs = await context.Runs
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
         return Ok(new
         {
-            data = runs, // 조회된 Run 데이터
-            meta = new // 메타 정보
+            data = runs,
+            meta = new
             {
-                page, // 현재 페이지
-                pageSize, // 페이지 크기
-                totalCount, // 전체 개수
-                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) // 전체 페이지 수
+                page,
+                pageSize,
+                totalCount,
+                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
             }
-        }); // 200 응답 반환
+        });
     }
-    
-    [HttpPatch("{id}/status")] // PATCH /api/runs/{id}/status
-    [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
-    [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 타입
-    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto) // UpdateStatus 메서드 정의
+
+    [HttpPatch("{id}/status")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto)
     {
-        var run = await context.Runs.FindAsync(id); // ID로 Run 조회
-        if (run == null) // Run이 없으면
+        var run = await context.Runs.FindAsync(id);
+        if (run == null)
         {
-            logger.LogWarning("Run not found: {RunId}", id); // 로그 경고
-            return NotFound(new {error = "Run not found"}); // 404 응답 반환
+            logger.LogWarning("Run not found: {RunId}", id);
+            return NotFound(new {error = "Run not found"});
         }
 
-        run.Status = dto.Status; // 상태 업데이트
-        await context.SaveChangesAsync(); // 비동기 저장
-        
+        run.Status = dto.Status;
+        await context.SaveChangesAsync();
+
         logger.LogInformation("Run status updated: {RunId} to {Status}", id, dto.Status);
-        
-        return Ok(run); // 200 응답 반환
+
+        return Ok(run);
     }
 
-    [HttpGet("{id}/results.csv")] // GET /api/runs/{id}/results.csv
-    [ProducesResponseType(StatusCodes.Status200OK)] // 200 응답 타입
-    [ProducesResponseType(StatusCodes.Status404NotFound)] // 404 응답 반환
-    public async Task<IActionResult> DownloadCsv(int id) // DownloadCsv 메서드 정의
+    [HttpGet("{id}/results.csv")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadCsv(int id)
     {
-        var run = await context.Runs.FindAsync(id); // ID로 Run 조회
-        if (run == null) // Run이 없으면
+        var run = await context.Runs.FindAsync(id);
+        if (run == null)
         {
-            return NotFound(new {error = "Run not found"}); // 404 응답 반환
+            return NotFound(new {error = "Run not found"});
         }
 
-        var jobs = await context.Jobs // Job 엔티티에서
-            .Where(job => job.RunId == id) // 해당 RunId의 Job 조회
-            .OrderBy(job => job.StartTs) // 시작 시간으로 정렬
-            .ToListAsync(); // 비동기 조회
+        var jobs = await context.Jobs
+            .Where(job => job.RunId == id)
+            .OrderBy(job => job.StartTs)
+            .ToListAsync();
 
-        var csv = new StringBuilder(); // CSV 문자열 빌더
-        csv.Append("\uFEFF"); // UTF-8 BOM 추가
-        // 헤더 순서: JobId,Action,CellCode,BookTitle,Quantity,StartTs,EndTs,TravelTimeSec,HandleTimeSec,TotalTimeSec,PathLengthCells,Result,FailReason,RobotName
+        var csv = new StringBuilder();
+        csv.Append("\uFEFF");
         csv.AppendLine("JobId,Action,CellCode,BookTitle,Quantity,StartTs,EndTs,TravelTimeSec,HandleTimeSec,TotalTimeSec,PathLengthCells,Result,FailReason,RobotName");
-        foreach (var job in jobs) // 각 Job에 대해
+        foreach (var job in jobs)
         {
             csv.AppendLine(
                 $"{job.Id}," +
@@ -139,71 +135,66 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
                 $"{job.Result ?? ""}," +
                 $"{EscapeCsv(job.FailReason ?? "")}," +
                 $"{EscapeCsv(job.RobotName ?? "")}"
-                ); // 각 Job 정보를 CSV 형식으로 추가 (순서 수정)
+                );
         }
-        
-        var bytes = Encoding.UTF8.GetBytes(csv.ToString()); // CSV 문자열을 바이트 배열로 변환
-        var timeStamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss"); // 타임스탬프 생성
-        
-        return File(bytes, "text/csv", $"results_{timeStamp}.csv"); // 파일 응답 반환
+
+        var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+        var timeStamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+
+        return File(bytes, "text/csv", $"results_{timeStamp}.csv");
     }
 
-    private string EscapeCsv(string value) // CSV 값 이스케이프 메서드
+    private string EscapeCsv(string value)
     {
-        if (string.IsNullOrEmpty(value)) // 값이 null 또는 빈 문자열이면
+        if (string.IsNullOrEmpty(value))
         {
-            return ""; // 빈 문자열 반환
+            return "";
         }
 
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\r') || value.Contains('\n')) // 값에 쉼표, 큰따옴표, 줄바꿈 등이 포함되어 있으면
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\r') || value.Contains('\n'))
         {
-            return $"\"{value.Replace("\"", "\"\"")}\""; // 큰따옴표로 감싸고, 내부의 큰따옴표는 두 개로 이스케이프
+            return $"\"{value.Replace("\"", "\"\"")}\"";
         }
-        
-        return value; // 그대로 반환
+
+        return value;
     }
 
-    private string FormatTimestamp(DateTime? dateTime) // 타임스탬프 포맷 메서드
+    private string FormatTimestamp(DateTime? dateTime)
     {
-        if (!dateTime.HasValue) // 값이 null이면
+        if (!dateTime.HasValue)
         {
-            return ""; // 빈 문자열 반환
+            return "";
         }
-        
+
         try
         {
-            // Linux/Windows 호환성을 위해 "Asia/Seoul" 사용
             var timeZoneId = "Asia/Seoul";
             try
             {
-                // 타임존이 시스템에 존재하는지 확인
                 TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             }
             catch (TimeZoneNotFoundException)
             {
-                // Windows 호환성을 위해 대체 ID 사용
                 timeZoneId = "Korea Standard Time";
             }
-            
+
             var timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             var convertedTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime.Value, timeZone);
             return convertedTime.ToString("yyyy-MM-dd HH:mm:ss");
         }
         catch (Exception)
         {
-            // 타임존 변환 실패 시 UTC 시간으로 대체
             return dateTime.Value.ToString("yyyy-MM-dd HH:mm:ss (UTC)");
         }
     }
 
-    // 소수점 둘째 자리까지 포맷 메서드
     private string FormatFloat(float? value)
     {
-        if (!value.HasValue) // 값이 null이면
+        if (!value.HasValue)
         {
-            return ""; // 빈 문자열 반환
+            return "";
         }
-        
-        return value.Value.ToString("F2"); // 소수점 둘째 자리까지 포맷
+
+        return value.Value.ToString("F2");
     }
 }
