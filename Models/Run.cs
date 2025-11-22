@@ -9,7 +9,8 @@ public class Run
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    public int? LayoutId { get; set; }
+    [MaxLength(100)]
+    public string? LayoutId { get; set; }
 
     [Required]
     public int RandomSeed { get; set; }
@@ -23,6 +24,9 @@ public class Run
     [Required]
     [Range(1, 10)]
     public int TopN { get; set; } = 3;
+
+    [Range(1, 3600)]
+    public float MoveTimeoutSec { get; set; } = 30.0f;
 
     [Required]
     [MaxLength(20)]

@@ -18,12 +18,28 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
     {
         logger.LogInformation("Creating Run");
 
+        if (!string.IsNullOrEmpty(dto.LayoutId))
+        {
+            var layoutExists = await context.Layouts.AnyAsync(l => l.LayoutId == dto.LayoutId);
+            if (!layoutExists)
+            {
+                logger.LogWarning("Layout not found: {LayoutId}", dto.LayoutId);
+                return BadRequest(new
+                {
+                    error = "LAYOUT_NOT_FOUND",
+                    message = $"Layout with ID '{dto.LayoutId}' not found. Please register the layout first."
+                });
+            }
+        }
+
         var run = new Run
         {
             RandomSeed = dto.RandomSeed,
             HandleTimeSec = dto.HandleTimeSec,
             RobotSpeedCellsPerSec = dto.RobotSpeedCellsPerSec,
             TopN = dto.TopN,
+            LayoutId = dto.LayoutId,
+            MoveTimeoutSec = dto.MoveTimeoutSec,
             Status = "PENDING"
         };
 

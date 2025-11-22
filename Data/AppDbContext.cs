@@ -8,12 +8,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Run> Runs { get; set; }
     public DbSet<Job> Jobs { get; set; }
     public DbSet<Book> Books { get; set; }
+    public DbSet<Layout> Layouts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Run>().HasIndex(run => run.Status);
+        modelBuilder.Entity<Run>().HasIndex(run => run.LayoutId);
 
         modelBuilder.Entity<Job>()
             .HasOne(job => job.Run)
@@ -26,5 +28,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Book>()
             .HasIndex(book => book.Title);
+
+        modelBuilder.Entity<Layout>()
+            .HasIndex(layout => layout.CreatedAt);
     }
 }
