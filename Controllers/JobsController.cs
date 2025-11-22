@@ -25,6 +25,38 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
             return NotFound(new {error = "Run not found"});
         }
 
+        if (!string.IsNullOrEmpty(dto.LayoutId))
+        {
+            var layout = await context.Layouts.FindAsync(dto.LayoutId);
+            if (layout == null)
+            {
+                logger.LogWarning("Layout not found: {LayoutId}", dto.LayoutId);
+                return BadRequest(new
+                {
+                    error = "LAYOUT_NOT_FOUND",
+                    message = $"Layout with ID '{dto.LayoutId}' not found. Please register the layout first."
+                });
+            }
+
+            var layoutCellCodes = layout.Cells.Select(c => c.Code).ToHashSet();
+            var invalidCodes = dto.Jobs
+                .Select(j => j.CellCode)
+                .Where(code => !layoutCellCodes.Contains(code))
+                .Distinct()
+                .ToList();
+
+            if (invalidCodes.Any())
+            {
+                logger.LogWarning("Invalid cell codes found: {InvalidCodes}", string.Join(", ", invalidCodes));
+                return BadRequest(new
+                {
+                    error = "INVALID_CELL_CODE",
+                    message = $"Cell codes do not exist in layout '{dto.LayoutId}': {string.Join(", ", invalidCodes)}",
+                    invalidCodes
+                });
+            }
+        }
+
         var jobs = dto.Jobs.Select(job => new Job
         {
             RunId = dto.RunId,
@@ -43,7 +75,7 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
         {
             accepted = jobs.Count,
             runId = dto.RunId,
-            jobIds = jobs.Select(job => job.RunId)
+            jobIds = jobs.Select(job => job.Id).ToArray()
         });
     }
 
@@ -79,6 +111,7 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
         if (dto.PathLengthCells.HasValue) job.PathLengthCells = dto.PathLengthCells;
         if (!string.IsNullOrEmpty(dto.Result)) job.Result = dto.Result;
         if (!string.IsNullOrEmpty(dto.FailReason)) job.FailReason = dto.FailReason;
+        if (!string.IsNullOrEmpty(dto.ErrorCode)) job.ErrorCode = dto.ErrorCode;
         if (!string.IsNullOrEmpty(dto.RobotName)) job.RobotName = dto.RobotName;
 
         await context.SaveChangesAsync();

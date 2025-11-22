@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using ShelfSimAPI.Data;
 
 namespace ShelfSimAPI.Models;
 
@@ -42,6 +43,9 @@ public class Job
 
     [MaxLength(500)]
     public string? FailReason { get; set; }
+
+    [MaxLength(50)]
+    public string? ErrorCode { get; set; }
 
     [MaxLength(50)]
     public string? RobotName { get; set; }

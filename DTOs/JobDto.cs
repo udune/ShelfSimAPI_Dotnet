@@ -26,6 +26,9 @@ public class CreateJobsBatchDto
     [Required]
     public int RunId { get; set; }
 
+    [MaxLength(100)]
+    public string? LayoutId { get; set; }
+
     [Required]
     [MinLength(1, ErrorMessage = "Jobs 리스트는 최소 1개 이상의 작업을 포함해야 합니다.")]
     public List<JobDto> Jobs { get; set; } = new List<JobDto>();
@@ -53,6 +56,9 @@ public class UpdateJobStatusDto
 
     [MaxLength(500)]
     public string? FailReason { get; set; }
+
+    [MaxLength(50)]
+    public string? ErrorCode { get; set; }
 
     [MaxLength(50)]
     public string? RobotName { get; set; }
