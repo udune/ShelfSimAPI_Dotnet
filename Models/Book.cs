@@ -5,27 +5,27 @@ namespace ShelfSimAPI.Models;
 
 public class Book
 {
-    [Key] // 기본 키
+    [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public int Id { get; set; } // 책 ID (외부 시스템에서 제공)
-    
-    [Required] // Not Null
+    public int Id { get; set; }
+
+    [Required]
     [MaxLength(200)]
-    public string Title { get; set; } = string.Empty; // 책 제목
-    
-    [MaxLength(200)] // 최대 길이 200
-    public string? Author { get; set; } // 저자 (선택 사항)
-    
-    [Required] // Not Null
-    [Range(1, 1000)] // 1 ~ 1000 사이의 값
-    public int ThicknessMn { get; set; } // 책 두께 (밀리미터 단위)
-    
-    [Required] // Not Null
-    [Range(1, 1000)] // 1 ~ 1000 사이의 값
-    public int HeightMm { get; set; } // 책 높이 (밀리미터 단위)
-    
-    [MaxLength(50)] // 최대 길이 50
-    public string? Sku { get; set; } // 재고 관리 코드 (선택 사항)
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 생성 시간
+    public string Title { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string? Author { get; set; }
+
+    [Required]
+    [Range(1, 1000)]
+    public int ThicknessMn { get; set; }
+
+    [Required]
+    [Range(1, 1000)]
+    public int HeightMm { get; set; }
+
+    [MaxLength(50)]
+    public string? Sku { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
