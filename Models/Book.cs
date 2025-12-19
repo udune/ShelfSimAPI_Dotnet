@@ -27,5 +27,9 @@ public class Book
     [MaxLength(50)]
     public string? Sku { get; set; }
 
+    [Required]
+    [Range(0, int.MaxValue)]
+    public int StockQuantity { get; set; } = 0;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

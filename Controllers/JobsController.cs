@@ -103,6 +103,9 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
             return NotFound(new {error = "Job not found"});
         }
 
+        // 이전 Result 상태 저장
+        var previousResult = job.Result;
+
         if (dto.StartTs.HasValue) job.StartTs = dto.StartTs;
         if (dto.EndTs.HasValue) job.EndTs = dto.EndTs;
         if (dto.TravelTimeSec.HasValue) job.TravelTimeSec = dto.TravelTimeSec;
@@ -113,6 +116,46 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
         if (!string.IsNullOrEmpty(dto.FailReason)) job.FailReason = dto.FailReason;
         if (!string.IsNullOrEmpty(dto.ErrorCode)) job.ErrorCode = dto.ErrorCode;
         if (!string.IsNullOrEmpty(dto.RobotName)) job.RobotName = dto.RobotName;
+
+        // Book 재고 자동 업데이트 로직
+        // Result가 Success로 변경되고, BookTitle이 있는 경우에만 재고 업데이트
+        if (job.Result?.Equals("Success", StringComparison.OrdinalIgnoreCase) == true &&
+            previousResult?.Equals("Success", StringComparison.OrdinalIgnoreCase) != true &&
+            !string.IsNullOrEmpty(job.BookTitle))
+        {
+            var book = await context.Books.FirstOrDefaultAsync(b => b.Title == job.BookTitle);
+            if (book != null)
+            {
+                if (job.Action.ToUpper() == "PUT")
+                {
+                    // PUT: 창고에 넣음 → 사용 가능한 재고 감소
+                    book.StockQuantity -= job.Quantity;
+                    logger.LogInformation(
+                        "Book inventory updated (PUT): {BookTitle}, Quantity: -{Quantity}, New Stock: {Stock}",
+                        book.Title, job.Quantity, book.StockQuantity);
+                }
+                else if (job.Action.ToUpper() == "PICK")
+                {
+                    // PICK: 창고에서 꺼냄 → 사용 가능한 재고 증가
+                    book.StockQuantity += job.Quantity;
+                    logger.LogInformation(
+                        "Book inventory updated (PICK): {BookTitle}, Quantity: +{Quantity}, New Stock: {Stock}",
+                        book.Title, job.Quantity, book.StockQuantity);
+                }
+
+                // 재고가 음수가 되는 경우 경고
+                if (book.StockQuantity < 0)
+                {
+                    logger.LogWarning(
+                        "Book inventory is negative: {BookTitle}, Stock: {Stock}",
+                        book.Title, book.StockQuantity);
+                }
+            }
+            else
+            {
+                logger.LogWarning("Book not found for inventory update: {BookTitle}", job.BookTitle);
+            }
+        }
 
         await context.SaveChangesAsync();
 

@@ -64,7 +64,7 @@ public class BooksController(AppDbContext context, ILogger<BooksController> logg
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateBook(Guid id, [FromBody] Book updatedBook)
+    public async Task<IActionResult> UpdateBook(int id, [FromBody] Book updatedBook)
     {
         var book = await context.Books.FindAsync(id);
         if (book == null)
@@ -89,7 +89,7 @@ public class BooksController(AppDbContext context, ILogger<BooksController> logg
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteBook(Guid id)
+    public async Task<IActionResult> DeleteBook(int id)
     {
         var book = await context.Books.FindAsync(id);
         if (book == null)

@@ -25,4 +25,21 @@
       <Folder Include="Services\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="publish\publish\web.config" />
+      <_ContentIncludedByDefault Remove="publish\web.config" />
+      <_ContentIncludedByDefault Remove="publish\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish\appsettings.Example.json" />
+      <_ContentIncludedByDefault Remove="publish\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\appsettings.Example.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\ShelfSimAPI.deps.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\ShelfSimAPI.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\ShelfSimAPI.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish\ShelfSimAPI.deps.json" />
+      <_ContentIncludedByDefault Remove="publish\ShelfSimAPI.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish\ShelfSimAPI.staticwebassets.endpoints.json" />
+    </ItemGroup>
+
 </Project>
