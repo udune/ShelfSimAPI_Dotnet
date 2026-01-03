@@ -62,7 +62,7 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
             RunId = dto.RunId,
             Action = job.Action.ToUpper(),
             CellCode = job.CellCode,
-            BookTitle = job.BookTitle,
+            MaterialName = job.MaterialName,
             Quantity = job.Quantity
         }).ToList();
 
@@ -117,43 +117,44 @@ public class JobsController(AppDbContext context, ILogger<JobsController> logger
         if (!string.IsNullOrEmpty(dto.ErrorCode)) job.ErrorCode = dto.ErrorCode;
         if (!string.IsNullOrEmpty(dto.RobotName)) job.RobotName = dto.RobotName;
 
-        // Book 재고 자동 업데이트 로직
-        // Result가 Success로 변경되고, BookTitle이 있는 경우에만 재고 업데이트
+        // Material 재고 자동 업데이트 로직
+        // Result가 Success로 변경되고, MaterialName이 있는 경우에만 재고 업데이트
         if (job.Result?.Equals("Success", StringComparison.OrdinalIgnoreCase) == true &&
             previousResult?.Equals("Success", StringComparison.OrdinalIgnoreCase) != true &&
-            !string.IsNullOrEmpty(job.BookTitle))
+            !string.IsNullOrEmpty(job.MaterialName))
         {
-            var book = await context.Books.FirstOrDefaultAsync(b => b.Title == job.BookTitle);
-            if (book != null)
+            var material = await context.Materials.FirstOrDefaultAsync(m => m.Name == job.MaterialName);
+            if (material != null)
             {
-                if (job.Action.ToUpper() == "PUT")
+                var action = job.Action.ToUpper();
+                if (action == "PUT" || action == "IN")
                 {
-                    // PUT: 창고에 넣음 → 사용 가능한 재고 감소
-                    book.StockQuantity -= job.Quantity;
+                    // PUT/IN: 창고에 넣음 → 사용 가능한 재고 감소
+                    material.StockQty -= job.Quantity;
                     logger.LogInformation(
-                        "Book inventory updated (PUT): {BookTitle}, Quantity: -{Quantity}, New Stock: {Stock}",
-                        book.Title, job.Quantity, book.StockQuantity);
+                        "Material inventory updated ({Action}): {MaterialName}, Quantity: -{Quantity}, New Stock: {Stock}",
+                        action, material.Name, job.Quantity, material.StockQty);
                 }
-                else if (job.Action.ToUpper() == "PICK")
+                else if (action == "PICK" || action == "OUT")
                 {
-                    // PICK: 창고에서 꺼냄 → 사용 가능한 재고 증가
-                    book.StockQuantity += job.Quantity;
+                    // PICK/OUT: 창고에서 꺼냄 → 사용 가능한 재고 증가
+                    material.StockQty += job.Quantity;
                     logger.LogInformation(
-                        "Book inventory updated (PICK): {BookTitle}, Quantity: +{Quantity}, New Stock: {Stock}",
-                        book.Title, job.Quantity, book.StockQuantity);
+                        "Material inventory updated ({Action}): {MaterialName}, Quantity: +{Quantity}, New Stock: {Stock}",
+                        action, material.Name, job.Quantity, material.StockQty);
                 }
 
                 // 재고가 음수가 되는 경우 경고
-                if (book.StockQuantity < 0)
+                if (material.StockQty < 0)
                 {
                     logger.LogWarning(
-                        "Book inventory is negative: {BookTitle}, Stock: {Stock}",
-                        book.Title, book.StockQuantity);
+                        "Material inventory is negative: {MaterialName}, Stock: {Stock}",
+                        material.Name, material.StockQty);
                 }
             }
             else
             {
-                logger.LogWarning("Book not found for inventory update: {BookTitle}", job.BookTitle);
+                logger.LogWarning("Material not found for inventory update: {MaterialName}", job.MaterialName);
             }
         }
 

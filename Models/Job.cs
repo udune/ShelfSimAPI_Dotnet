@@ -22,8 +22,11 @@ public class Job
     [MaxLength(10)]
     public string CellCode { get; set; } = string.Empty;
 
+    /// <summary>
+    /// 자재명 (기존 BookTitle에서 변경)
+    /// </summary>
     [MaxLength(200)]
-    public string? BookTitle { get; set; }
+    public string? MaterialName { get; set; }
 
     [Required]
     [Range(1, int.MaxValue)]
@@ -49,6 +52,29 @@ public class Job
 
     [MaxLength(50)]
     public string? RobotName { get; set; }
+
+    // === 환경 스냅샷 (신규) ===
+
+    /// <summary>
+    /// 작업 당시 온도 (℃)
+    /// </summary>
+    public float? SnapshotTemp { get; set; }
+
+    /// <summary>
+    /// 작업 당시 습도 (%)
+    /// </summary>
+    public float? SnapshotHumid { get; set; }
+
+    /// <summary>
+    /// 작업 당시 빛 누출 여부
+    /// </summary>
+    public bool? SnapshotLightLeak { get; set; }
+
+    /// <summary>
+    /// 작업자 ID (RobotName과 별도로 사람 작업자 기록)
+    /// </summary>
+    [MaxLength(50)]
+    public string? WorkerId { get; set; }
 
     [ForeignKey(nameof(RunId))]
     [JsonIgnore]

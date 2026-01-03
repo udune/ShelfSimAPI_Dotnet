@@ -10,13 +10,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowUnity", policy =>
+    options.AddPolicy("AllowClients", policy =>
     {
         policy.WithOrigins(
                 "https://zingy-cascaron-9d9795.netlify.app",
                 "http://localhost:5000",
                 "https://localhost:5001",
-                "http://localhost"
+                "http://localhost",
+                "http://localhost:5173"  // WPF 개발용 추가
             )
             .AllowAnyMethod()
             .AllowAnyHeader();
@@ -48,7 +49,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowUnity");
+app.UseCors("AllowClients");
 app.UseAuthorization();
 app.MapControllers();
 

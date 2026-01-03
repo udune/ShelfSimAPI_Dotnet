@@ -7,8 +7,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Run> Runs { get; set; }
     public DbSet<Job> Jobs { get; set; }
-    public DbSet<Book> Books { get; set; }
+    public DbSet<Material> Materials { get; set; }
     public DbSet<Layout> Layouts { get; set; }
+    public DbSet<EnvironmentConfig> EnvironmentConfigs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,10 +27,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Job>()
             .HasIndex(job => new { job.RunId, job.CellCode });
 
-        modelBuilder.Entity<Book>()
-            .HasIndex(book => book.Title);
+        modelBuilder.Entity<Material>()
+            .HasIndex(m => m.Name);
+
+        modelBuilder.Entity<Material>()
+            .HasIndex(m => m.LotId);
 
         modelBuilder.Entity<Layout>()
             .HasIndex(layout => layout.CreatedAt);
+
+        modelBuilder.Entity<EnvironmentConfig>()
+            .HasKey(e => e.ConfigKey);
     }
 }

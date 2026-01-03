@@ -5,19 +5,18 @@ namespace ShelfSimAPI.DTOs;
 public class JobDto
 {
     [Required]
-    [RegularExpression("^(PUT|PICK)$", ErrorMessage = "Action은 'PUT' 또는 'PICK'이어야 합니다.")]
+    [RegularExpression("^(IN|OUT|PUT|PICK)$")]
     public string Action { get; set; } = string.Empty;
 
     [Required]
-    [RegularExpression("^[A-Z][0-9]{2}$", ErrorMessage = "CellCode는 대문자 하나와 숫자 두 개로 구성되어야 합니다. 예: A01, B12")]
+    [RegularExpression("^[A-Z][0-9]{2}$")]
     public string CellCode { get; set; } = string.Empty;
 
     [Required]
-    [MinLength(1, ErrorMessage = "BookTitle은 최소 1자 이상이어야 합니다.")]
-    public string BookTitle { get; set; } = string.Empty;
+    public string MaterialName { get; set; } = string.Empty;
 
     [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "Quantity는 1 이상의 값이어야 합니다.")]
+    [Range(1, int.MaxValue)]
     public int Quantity { get; set; }
 }
 

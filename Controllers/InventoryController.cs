@@ -13,7 +13,7 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
     /// 전체 셀의 재고 상태 조회
     /// </summary>
     /// <param name="runId">특정 Run의 결과만 조회 (선택사항)</param>
-    /// <param name="onlyOccupied">true일 경우 책이 있는 셀만 반환</param>
+    /// <param name="onlyOccupied">true일 경우 자재가 있는 셀만 반환</param>
     /// <returns>셀별 재고 상태 목록</returns>
     [HttpGet("cells")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -44,11 +44,13 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
             .Select(g =>
             {
                 var lastJob = g.Last(); // EndTs로 정렬했으므로 마지막이 최신
+                var action = lastJob.Action.ToUpper();
+                var isStored = action == "PUT" || action == "IN";
                 return new CellInventoryDto
                 {
                     CellCode = g.Key,
-                    BookTitle = lastJob.Action.ToUpper() == "PUT" ? lastJob.BookTitle : null,
-                    Quantity = lastJob.Action.ToUpper() == "PUT" ? lastJob.Quantity : 0,
+                    MaterialName = isStored ? lastJob.MaterialName : null,
+                    Quantity = isStored ? lastJob.Quantity : 0,
                     LastAction = lastJob.Action,
                     LastUpdatedAt = lastJob.EndTs,
                     RunId = lastJob.RunId
@@ -56,10 +58,10 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
             })
             .ToList();
 
-        // 책이 있는 셀만 반환하는 경우
+        // 자재가 있는 셀만 반환하는 경우
         if (onlyOccupied)
         {
-            cellInventory = cellInventory.Where(c => !string.IsNullOrEmpty(c.BookTitle)).ToList();
+            cellInventory = cellInventory.Where(c => !string.IsNullOrEmpty(c.MaterialName)).ToList();
         }
 
         logger.LogInformation("Found {Count} cells", cellInventory.Count);
@@ -102,11 +104,13 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
             return NotFound(new { error = "해당 셀의 작업 이력을 찾을 수 없습니다." });
         }
 
+        var action = lastJob.Action.ToUpper();
+        var isStored = action == "PUT" || action == "IN";
         var inventory = new CellInventoryDto
         {
             CellCode = cellCode,
-            BookTitle = lastJob.Action.ToUpper() == "PUT" ? lastJob.BookTitle : null,
-            Quantity = lastJob.Action.ToUpper() == "PUT" ? lastJob.Quantity : 0,
+            MaterialName = isStored ? lastJob.MaterialName : null,
+            Quantity = isStored ? lastJob.Quantity : 0,
             LastAction = lastJob.Action,
             LastUpdatedAt = lastJob.EndTs,
             RunId = lastJob.RunId
@@ -116,15 +120,15 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
     }
 
     /// <summary>
-    /// 책별 총 재고 현황 조회
+    /// 자재별 총 재고 현황 조회
     /// </summary>
     /// <param name="runId">특정 Run의 결과만 조회 (선택사항)</param>
-    /// <returns>책별 재고 현황 목록</returns>
-    [HttpGet("books")]
+    /// <returns>자재별 재고 현황 목록</returns>
+    [HttpGet("materials")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<BookInventoryDto>>> GetBookInventory([FromQuery] int? runId = null)
+    public async Task<ActionResult<List<MaterialInventoryDto>>> GetMaterialInventory([FromQuery] int? runId = null)
     {
-        logger.LogInformation("Getting book inventory. RunId: {RunId}", runId);
+        logger.LogInformation("Getting material inventory. RunId: {RunId}", runId);
 
         // 전체 셀 재고 조회
         var cellInventoryResponse = await GetAllCellInventory(runId, onlyOccupied: true);
@@ -132,40 +136,40 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
         if (cellInventoryResponse.Result is OkObjectResult okResult &&
             okResult.Value is List<CellInventoryDto> cellInventory)
         {
-            // 책 제목별로 그룹화하여 총 수량 계산
-            var bookInventory = cellInventory
-                .Where(c => !string.IsNullOrEmpty(c.BookTitle))
-                .GroupBy(c => c.BookTitle!)
-                .Select(g => new BookInventoryDto
+            // 자재명별로 그룹화하여 총 수량 계산
+            var materialInventory = cellInventory
+                .Where(c => !string.IsNullOrEmpty(c.MaterialName))
+                .GroupBy(c => c.MaterialName!)
+                .Select(g => new MaterialInventoryDto
                 {
-                    BookTitle = g.Key,
+                    MaterialName = g.Key,
                     TotalQuantity = g.Sum(c => c.Quantity),
                     CellCodes = g.Select(c => c.CellCode).OrderBy(code => code).ToList()
                 })
-                .OrderBy(b => b.BookTitle)
+                .OrderBy(m => m.MaterialName)
                 .ToList();
 
-            logger.LogInformation("Found {Count} books in inventory", bookInventory.Count);
-            return Ok(bookInventory);
+            logger.LogInformation("Found {Count} materials in inventory", materialInventory.Count);
+            return Ok(materialInventory);
         }
 
-        return Ok(new List<BookInventoryDto>());
+        return Ok(new List<MaterialInventoryDto>());
     }
 
     /// <summary>
-    /// 특정 책의 재고 현황 조회
+    /// 특정 자재의 재고 현황 조회
     /// </summary>
-    /// <param name="bookTitle">책 제목</param>
+    /// <param name="materialName">자재명</param>
     /// <param name="runId">특정 Run의 결과만 조회 (선택사항)</param>
-    /// <returns>해당 책의 재고 현황</returns>
-    [HttpGet("books/{bookTitle}")]
+    /// <returns>해당 자재의 재고 현황</returns>
+    [HttpGet("materials/{materialName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<BookInventoryDto>> GetBookInventoryByTitle(
-        string bookTitle,
+    public async Task<ActionResult<MaterialInventoryDto>> GetMaterialInventoryByName(
+        string materialName,
         [FromQuery] int? runId = null)
     {
-        logger.LogInformation("Getting inventory for book: {BookTitle}, RunId: {RunId}", bookTitle, runId);
+        logger.LogInformation("Getting inventory for material: {MaterialName}, RunId: {RunId}", materialName, runId);
 
         // 전체 셀 재고 조회
         var cellInventoryResponse = await GetAllCellInventory(runId, onlyOccupied: true);
@@ -173,22 +177,22 @@ public class InventoryController(AppDbContext context, ILogger<InventoryControll
         if (cellInventoryResponse.Result is OkObjectResult okResult &&
             okResult.Value is List<CellInventoryDto> cellInventory)
         {
-            // 해당 책이 있는 셀들 필터링
-            var bookCells = cellInventory
-                .Where(c => c.BookTitle == bookTitle)
+            // 해당 자재가 있는 셀들 필터링
+            var materialCells = cellInventory
+                .Where(c => c.MaterialName == materialName)
                 .ToList();
 
-            if (!bookCells.Any())
+            if (!materialCells.Any())
             {
-                logger.LogWarning("Book not found in inventory: {BookTitle}", bookTitle);
-                return NotFound(new { error = "해당 책의 재고를 찾을 수 없습니다." });
+                logger.LogWarning("Material not found in inventory: {MaterialName}", materialName);
+                return NotFound(new { error = "해당 자재의 재고를 찾을 수 없습니다." });
             }
 
-            var inventory = new BookInventoryDto
+            var inventory = new MaterialInventoryDto
             {
-                BookTitle = bookTitle,
-                TotalQuantity = bookCells.Sum(c => c.Quantity),
-                CellCodes = bookCells.Select(c => c.CellCode).OrderBy(code => code).ToList()
+                MaterialName = materialName,
+                TotalQuantity = materialCells.Sum(c => c.Quantity),
+                CellCodes = materialCells.Select(c => c.CellCode).OrderBy(code => code).ToList()
             };
 
             return Ok(inventory);

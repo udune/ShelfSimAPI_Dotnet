@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShelfSimAPI.Data;
@@ -11,9 +12,11 @@ using ShelfSimAPI.Data;
 namespace ShelfSimAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260103103849_AddWmsFields")]
+    partial class AddWmsFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,50 @@ namespace ShelfSimAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("ShelfSimAPI.Models.Book", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Author")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HeightMm")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sku")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ThicknessMn")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Title");
+
+                    b.ToTable("Books");
+                });
 
             modelBuilder.Entity("ShelfSimAPI.Models.EnvironmentConfig", b =>
                 {
@@ -62,6 +109,10 @@ namespace ShelfSimAPI.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
+                    b.Property<string>("BookTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("CellCode")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -80,10 +131,6 @@ namespace ShelfSimAPI.Migrations
 
                     b.Property<float?>("HandleTimeSec")
                         .HasColumnType("real");
-
-                    b.Property<string>("MaterialName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
 
                     b.Property<int?>("PathLengthCells")
                         .HasColumnType("integer");
@@ -174,46 +221,6 @@ namespace ShelfSimAPI.Migrations
                     b.HasIndex("CreatedAt");
 
                     b.ToTable("Layouts");
-                });
-
-            modelBuilder.Entity("ShelfSimAPI.Models.Material", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LotId")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("StockQty")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Type")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Vendor")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LotId");
-
-                    b.HasIndex("Name");
-
-                    b.ToTable("Materials");
                 });
 
             modelBuilder.Entity("ShelfSimAPI.Models.Run", b =>

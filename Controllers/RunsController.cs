@@ -133,14 +133,14 @@ public class RunsController(AppDbContext context, ILogger<RunsController> logger
 
         var csv = new StringBuilder();
         csv.Append("\uFEFF");
-        csv.AppendLine("JobId,Action,CellCode,BookTitle,Quantity,StartTs,EndTs,TravelTimeSec,HandleTimeSec,TotalTimeSec,PathLengthCells,Result,FailReason,RobotName");
+        csv.AppendLine("JobId,Action,CellCode,MaterialName,Quantity,StartTs,EndTs,TravelTimeSec,HandleTimeSec,TotalTimeSec,PathLengthCells,Result,FailReason,RobotName");
         foreach (var job in jobs)
         {
             csv.AppendLine(
                 $"{job.Id}," +
                 $"{job.Action}," +
                 $"{job.CellCode}," +
-                $"{EscapeCsv(job.BookTitle ?? "")}," +
+                $"{EscapeCsv(job.MaterialName ?? "")}," +
                 $"{job.Quantity}," +
                 $"{FormatTimestamp(job.StartTs)}," +
                 $"{FormatTimestamp(job.EndTs)}," +
