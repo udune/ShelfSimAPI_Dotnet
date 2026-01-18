@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShelfSimAPI.Data;
+using ShelfSimAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,44 @@ using (var scope = app.Services.CreateScope())
     {
         db.Database.Migrate();
         Console.WriteLine("Database migrated successfully.");
+
+        // Seed Data: 기본 SimulationConfig
+        if (!db.SimulationConfigs.Any())
+        {
+            var defaultConfig = new SimulationConfig
+            {
+                Id = "default-config",
+                Name = "기본 설정",
+                HandleTime = 2.0f,
+                RobotSpeed = 3.0f,
+                MoveTimeoutSec = 30.0f,
+                TopN = 3,
+                RandomSeed = 42,
+                WarehousePosX = 0,
+                WarehousePosY = 0,
+                IsDefault = true
+            };
+            db.SimulationConfigs.Add(defaultConfig);
+            Console.WriteLine("Default SimulationConfig created.");
+        }
+
+        // Seed Data: 기본 CellsLayout
+        if (!db.CellsLayouts.Any())
+        {
+            var defaultLayout = new CellsLayout
+            {
+                Id = "default-layout",
+                Name = "기본 레이아웃",
+                WarehouseX = 0,
+                WarehouseY = 0,
+                IsDefault = true
+            };
+            defaultLayout.CalculateLayoutHash();
+            db.CellsLayouts.Add(defaultLayout);
+            Console.WriteLine("Default CellsLayout created.");
+        }
+
+        await db.SaveChangesAsync();
     }
     catch (Exception e)
     {
